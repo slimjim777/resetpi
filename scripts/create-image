@@ -27,11 +27,11 @@ create_new_writable() {
     # Create a new writable with the free space
     echo "Create the new partition"
     start="$(parted -ms "$device" unit s print free | tail -1 | cut -d ':' -f2 | sed 's/s$//')"
-    parted -ms "$device" mkpart primary "${start}s" 100%
+    sudo parted -ms "$device" mkpart primary "${start}s" 100%
 
     # Format the new partition
     echo "Create the new partition $writable"
-    mkfs.ext4 -F $writable -L writable
+    sudo mkfs.ext4 -F $writable -L writable
 }
 
 move_to_writable() {

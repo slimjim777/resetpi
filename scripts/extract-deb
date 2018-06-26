@@ -1,0 +1,25 @@
+# -*- shell-script -*-
+
+extract_debs() {
+    extract-deb.download --arch armhf rsync
+    extract-deb.download --arch armhf e2fsprogs
+}
+
+extract_deb_files() {
+    curdir="$(pwd)"
+    echo "---$curdir"
+
+    # Install the snap to extra deb files
+    snap install extract-deb
+
+    # Get rsync and mkfs
+    extract_debs
+
+    # Copy the tools to initrd
+    cp unpack/usr/bin/rsync initrd/bin/
+    cp unpack/sbin/mke2fs initrd/sbin/
+    cd initrd/sbin/
+    ln -s mke2fs mkfs.ext4
+
+    cd $curdir
+}

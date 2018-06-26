@@ -10,6 +10,9 @@ else
 fi
 
 . scripts/create-image
+. scripts/unpack-initrd
+. scripts/build-flashback
+. scripts/extract-deb
 
 # Initialize the environment
 init_env
@@ -32,3 +35,13 @@ create_new_writable $device $writable
 
 # Move the writable data to the new partition
 move_to_writable $restore $writable
+
+# Unpack the initrd image
+unpack_initrd
+
+# Build flashback and add it to initrd/bin
+build_flashback
+
+# Extract the extra tools we need
+extract_deb_files
+

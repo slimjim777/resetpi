@@ -1,0 +1,22 @@
+# -*- shell-script -*-
+
+flashback="https://github.com/CanonicalLtd/flashback"
+
+build_flashback() {
+    GOPATH="$(pwd)"
+    echo "Use local GOPATH $GOPATH"
+
+    # Get the flashback source
+    mkdir -p src/github.com/CanonicalLtd
+    cd src/github.com/CanonicalLtd
+    git clone $flashback
+    cd flashback
+
+    # Build the source for arm
+    GOPATH=$GOPATH ./get-deps.sh
+    env GOPATH=$GOPATH GOOS=linux GOARCH=arm go build -o flashback cmd/flashback/main.go
+
+    # Move the binary to the initrd image
+    mv flashback $GOPATH/initrd/bin/
+    cd $GOPATH
+}
