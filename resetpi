@@ -62,5 +62,8 @@ custom_initrd
 echo "Pack and copy the custom initrd image"
 pack_initrd
 
+# Create the flashback config file on the restore partition
+flashback_config $restore
+
 # Unmount the drives
 sudo umount /systemboot

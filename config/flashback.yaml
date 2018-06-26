@@ -1,0 +1,19 @@
+# Partition labels and backup files
+restore:
+  # - label: custom1
+  #   file: custom1.img.gz
+  #   type: img
+  # - label: custom2
+  #   file: custom2.tar.gz
+  #   type: tar
+
+# Path to the log file
+logfile: /var/log/flashback.log
+
+# The files and directories to keep when performing a factory-reset
+retain:
+  size: 32  # total max size of retained data in Mb
+  data:
+    - /var/snap/network-manager/current/conf/system-connections
+    - /var/log/logit
+    - /var/log/boot.log

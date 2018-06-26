@@ -20,3 +20,9 @@ build_flashback() {
     mv flashback $GOPATH/initrd/bin/
     cd $GOPATH
 }
+
+flashback_config() {
+    sudo mount $1 /restore
+    sudo cp ../config/flashback.yaml /restore/
+    sudo umount /restore
+}

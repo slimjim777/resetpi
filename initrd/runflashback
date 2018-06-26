@@ -8,7 +8,7 @@ restore="$(findfs LABEL=restore)"
 
 # Check if the checkpoint file is created (so bootprint is done)
 mkdir -p /restore
-sudo mount $restore /restore
+mount $restore /restore
 
 # Call flashback in bootprint mode
 if [ ! -f "/restore/bootprint" ]; then
@@ -17,7 +17,7 @@ if [ ! -f "/restore/bootprint" ]; then
 
     # Create a checkpoint file
     echo "Flashback bootprint complete---------------"
-    sudo mount $restore /restore
+    mount $restore /restore
     touch /restore/bootprint
 fi
 
@@ -30,4 +30,4 @@ if grep -q reset=factory-reset /proc/cmdline; then
     reboot
 fi
 
-sudo umount /restore
+umount /restore
