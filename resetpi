@@ -1,0 +1,84 @@
+#!/bin/sh
+
+device=$1
+
+if [ -z "$device" ]; then
+    echo "Usage:\nresetpi <device>"
+    exit 1 
+else
+    echo "Device $device"
+fi
+
+init_env() {
+    # Clean up
+    if [ -d "build"]; then
+       rm -rf build/
+    fi
+
+    mkdir build
+}
+
+write_image_device() {
+    device=$1
+
+    # Get the raspberry pi image and decompress it
+    curl -O http://cdimage.ubuntu.com/ubuntu-core/16/stable/current/ubuntu-core-16-pi3.img.xz
+
+    # Write the image to the card
+    xzcat ubuntu-core-16-pi3.img.xz | sudo dd of=$device bs=32M
+    sync
+}
+
+create_new_writable() {
+    device=$1
+    writable=$2
+
+    # Create a new writable with the free space
+    echo "Create the new partition"
+    start="$(parted -ms "$device" unit s print free | tail -1 | cut -d ':' -f2 | sed 's/s$//')"
+    parted -ms "$device" mkpart primary "${start}s" 100%
+
+    # Format the new partition
+    echo "Create the new partition $writable"
+    mkfs.ext4 -F $writable -L writable
+}
+
+move_to_writable() {
+    restore=$1
+    writable=$2
+
+    # Mount filesystems
+    mkdir -p /restore
+    mkdir -p /writable
+    mount $restore /restore
+    mount $writable /writable
+
+    # Move the data
+    mv /restore/system-data /writable
+
+    # Clean up
+    umount /restore
+    umount /writable
+}
+
+# Initialize the environment
+init_env
+cd build
+
+write_image_device $device
+
+# Get the  writable partition and rename to restore
+restore="$(findfs LABEL=writable)"
+tune2fs -L restore "$restore"
+
+# Generate the name of the new writable partition
+writable="${device}3"
+if [ $device = *"mmc"* ]; then 
+    writable="${device}p2"
+fi
+
+# Create the new writable partition with free space
+create_new_writable $device $writable
+
+# Move the writable data to the new partition
+move_to_writable $restore $writable
