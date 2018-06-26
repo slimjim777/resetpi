@@ -1,0 +1,33 @@
+#!/bin/sh -e
+# Run flashback to create a bootprint or factory reset
+
+echo "Run Flashback check-----------------------------"
+
+# Get the restore and writable partitions
+restore="$(findfs LABEL=restore)"
+
+# Check if the checkpoint file is created (so bootprint is done)
+mkdir -p /restore
+sudo mount $restore /restore
+
+# Call flashback in bootprint mode
+if [ ! -f "/restore/bootprint" ]; then
+    echo "Flashback bootprint------------------------"
+    flashback --bootprint --config /restore/flashback.yaml
+
+    # Create a checkpoint file
+    echo "Flashback bootprint complete---------------"
+    sudo mount $restore /restore
+    touch /restore/bootprint
+fi
+
+# Check if we need to perform a factory-reset
+if grep -q reset=factory-reset /proc/cmdline; then
+    echo "Flashback factory-reset--------------------"
+
+    # Call flashback to initiate the factory reset
+    flashback --factory-reset --config /restore/flashback.yaml
+    reboot
+fi
+
+sudo umount /restore

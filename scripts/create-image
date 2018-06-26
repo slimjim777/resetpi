@@ -1,8 +1,10 @@
 # -*- shell-script -*-
 
+image=http://cdimage.ubuntu.com/ubuntu-core/16/stable/current/ubuntu-core-16-pi3.img.xz
+
 init_env() {
     # Clean up
-    if [ -d "build"]; then
+    if [ -d "build" ]; then
        rm -rf build/
     fi
 
@@ -11,9 +13,14 @@ init_env() {
 
 write_image_device() {
     device=$1
+    local_image=$2
 
-    # Get the raspberry pi image and decompress it
-    curl -O http://cdimage.ubuntu.com/ubuntu-core/16/stable/current/ubuntu-core-16-pi3.img.xz
+    if [ -f "$local_image" ]; then
+        cp $local_image .
+    else
+        # Get the raspberry pi image and decompress it
+        curl -O $image
+    fi
 
     # Write the image to the card
     xzcat ubuntu-core-16-pi3.img.xz | sudo dd of=$device bs=32M
@@ -26,7 +33,7 @@ create_new_writable() {
 
     # Create a new writable with the free space
     echo "Create the new partition"
-    start="$(parted -ms "$device" unit s print free | tail -1 | cut -d ':' -f2 | sed 's/s$//')"
+    start="$(sudo parted -ms "$device" unit s print free | tail -1 | cut -d ':' -f2 | sed 's/s$//')"
     sudo parted -ms "$device" mkpart primary "${start}s" 100%
 
     # Format the new partition
@@ -41,13 +48,13 @@ move_to_writable() {
     # Mount filesystems
     mkdir -p /restore
     mkdir -p /writable
-    mount $restore /restore
-    mount $writable /writable
+    sudo mount $restore /restore
+    sudo mount $writable /writable
 
     # Move the data
-    mv /restore/system-data /writable
+    sudo mv /restore/system-data /writable
 
     # Clean up
-    umount /restore
-    umount /writable
+    sudo umount /restore
+    sudo umount /writable
 }

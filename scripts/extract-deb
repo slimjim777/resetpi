@@ -7,7 +7,6 @@ extract_debs() {
 
 extract_deb_files() {
     curdir="$(pwd)"
-    echo "---$curdir"
 
     # Install the snap to extra deb files
     snap install extract-deb

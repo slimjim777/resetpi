@@ -1,0 +1,32 @@
+# -*- shell-script -*-
+
+initrd=/systemboot/pi2-kernel_22.snap/initrd.img
+
+unpack_initrd() {
+    # Mount system-boot
+    systemboot="$(findfs LABEL=system-boot)"
+    mkdir -p /systemboot
+    sudo mount $systemboot /systemboot
+
+    # Unpack initrd from system-boot
+    mkdir initrd
+    cd initrd
+    xz -dc < $initrd | cpio --quiet -i --make-directories
+    cd ..
+}
+
+pack_initrd() {
+    cd initrd
+    find . | cpio -o -H newc | sudo lzma -7 > ../initrd.img
+    cd ..
+    sudo cp initrd.img $initrd
+}
+
+custom_initrd() {
+    # Copy the extra initrd script
+    cp ../initrd/runflashback initrd/scripts/local-premount/
+
+    # Add the call to the ORDER script
+    echo "/scripts/local-premount/runflashback \"\$@\"" >> initrd/scripts/local-premount/ORDER
+    echo "[ -e /conf/param.conf ] && . /conf/param.conf" >> initrd/scripts/local-premount/ORDER
+}

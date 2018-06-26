@@ -1,28 +1,32 @@
 #!/bin/sh
 
 device=$1
+local_image=$2
 
 if [ -z "$device" ]; then
     echo "Usage:\nresetpi <device>"
-    exit 1 
+    exit 1
 else
     echo "Device $device"
 fi
 
 . scripts/create-image
-. scripts/unpack-initrd
 . scripts/build-flashback
 . scripts/extract-deb
+. scripts/custom-initrd
 
 # Initialize the environment
 init_env
 cd build
 
-write_image_device $device
+# Download the image and write it to the device
+echo "Write the image to the device"
+write_image_device $device $local_image
 
 # Get the  writable partition and rename to restore
+echo "Label the writable partition as restore"
 restore="$(findfs LABEL=writable)"
-tune2fs -L restore "$restore"
+sudo tune2fs -L restore "$restore"
 
 # Generate the name of the new writable partition
 writable="${device}3"
@@ -31,17 +35,32 @@ if [ $device = *"mmc"* ]; then
 fi
 
 # Create the new writable partition with free space
+echo "Create a new partition with the free space"
 create_new_writable $device $writable
 
 # Move the writable data to the new partition
+echo "Transfer the data back to writable"
 move_to_writable $restore $writable
 
 # Unpack the initrd image
+echo "Unpack the initrd image"
 unpack_initrd
 
 # Build flashback and add it to initrd/bin
+echo "Build the flashback application"
 build_flashback
 
 # Extract the extra tools we need
+echo "Add the extra tools to initrd"
 extract_deb_files
 
+# Copy the custom initrd scripts over
+echo "Add the extra scripts for our custom initrd"
+custom_initrd
+
+# Repack the initrd file and overwrite the one in system-boot
+echo "Pack and copy the custom initrd image"
+pack_initrd
+
+# Unmount the drives
+sudo umount /systemboot
